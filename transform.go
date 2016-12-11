@@ -22,6 +22,7 @@ import (
 	"image/png"
 
 	"github.com/disintegration/imaging"
+	"github.com/rwcarlsen/goexif/exif"
 	"willnorris.com/go/gifresize"
 )
 
@@ -42,6 +43,12 @@ func Transform(img []byte, opt Options) ([]byte, error) {
 
 	// decode image
 	m, format, err := image.Decode(bytes.NewReader(img))
+	if err != nil {
+		return nil, err
+	}
+
+	// Auto set rotation/fh/fv options based on exif
+	opt, err = autoRotate(img, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -153,4 +160,60 @@ func transformImage(m image.Image, opt Options) image.Image {
 	}
 
 	return m
+}
+
+func autoRotate(img []byte, opt Options) (Options, error) {
+	if opt.Rotate != 360 {
+		return opt, nil
+	}
+	// decode exif
+	x, err := exif.Decode(bytes.NewReader(img))
+	if err != nil {
+		return opt, err
+	}
+	orientation, err := x.Get(exif.Orientation)
+	if err != nil {
+		return opt, err
+	}
+	intOrientation, err := orientation.Int(0)
+	if err != nil {
+		return opt, err
+	}
+
+	switch intOrientation {
+	case 1:
+		opt.Rotate = 0
+		opt.FlipHorizontal = false
+		opt.FlipVertical = false
+	case 2:
+		opt.Rotate = 0
+		opt.FlipHorizontal = true
+		opt.FlipVertical = false
+	case 3:
+		opt.Rotate = 180
+		opt.FlipHorizontal = false
+		opt.FlipVertical = false
+	case 4:
+		opt.Rotate = 0
+		opt.FlipHorizontal = false
+		opt.FlipVertical = true
+	case 5:
+		opt.Rotate = 270
+		opt.FlipHorizontal = false
+		opt.FlipVertical = true
+	case 6:
+		opt.Rotate = 270
+		opt.FlipHorizontal = false
+		opt.FlipVertical = false
+	case 7:
+		opt.Rotate = 90
+		opt.FlipHorizontal = false
+		opt.FlipVertical = true
+	case 8:
+		opt.Rotate = 90
+		opt.FlipHorizontal = false
+		opt.FlipVertical = false
+	}
+
+	return opt, nil
 }
