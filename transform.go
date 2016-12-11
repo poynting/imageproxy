@@ -143,9 +143,17 @@ func transformImage(m image.Image, opt Options) image.Image {
 
 	// flip
 	if opt.FlipVertical {
+		if opt.Rotate == 90 {
+			m = imaging.Transverse(m)
+			return m
+		}
 		m = imaging.FlipV(m)
 	}
 	if opt.FlipHorizontal {
+		if opt.Rotate == 90 {
+			m = imaging.Transpose(m)
+			return m
+		}
 		m = imaging.FlipH(m)
 	}
 
