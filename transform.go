@@ -81,6 +81,12 @@ func Transform(img []byte, opt Options) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+	case "tiff":
+		m = transformImage(m, opt)
+		err = jpeg.Encode(buf, m, &jpeg.Options{Quality: defaultQuality})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return buf.Bytes(), nil
